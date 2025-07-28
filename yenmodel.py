@@ -8,10 +8,10 @@ import matplotlib.pyplot as plt
 
 PORT = 'COM4'
 BAUDRATE = 230400
-READ_INTERVAL = 0.1  # saniye
+READ_INTERVAL = 1  # saniye
 
 
-def collect_initial_data(ser, duration=0.1):
+def collect_initial_data(ser, duration=1):
     data = []
     start_time = time.time()
     while time.time() - start_time < duration:
@@ -26,23 +26,17 @@ def collect_initial_data(ser, duration=0.1):
             time.sleep(0.01)
     return np.array(data).reshape(-1, 1)
 
-
-
-
-
 def main():
     ser = serial.Serial(PORT, BAUDRATE, timeout=1)
     time.sleep(2)
 
-    print("Başlangıçta model eğitimi için normal veri toplanıyor...")
-    initial_data = collect_initial_data(ser, duration=10)  # 10 sn veri topla
+    initial_data = collect_initial_data(ser, duration=1)  # 1 sn veri topla
 
     scaler = StandardScaler()
     scaled_train = scaler.fit_transform(initial_data)
     model = IsolationForest(contamination=0.05, random_state=42)
     model.fit(scaled_train)
 
-    print("Model eğitildi, artık gerçek zamanlı anomali tespiti yapılabilir.")
 
     plt.ion()
     fig, ax = plt.subplots(figsize=(10, 5))
@@ -50,7 +44,7 @@ def main():
     try:
         while True:
             data = collect_initial_data(ser, READ_INTERVAL)
-            if not data:
+            if len(data) == 0:
                 print("Veri gelmedi, tekrar dene...")
                 continue
 
